@@ -2,7 +2,7 @@
  * ProFTPD: mod_md5 -- an FSIO module for automatically generating MD5 hashes
  *                     of uploaded files
  *
- * Copyright (c) 2001-2009 TJ Saunders
+ * Copyright (c) 2001-2013 TJ Saunders
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 
 #include "conf.h"
 
-#define MOD_MD5_VERSION 	"mod_md5/0.3.5"
+#define MOD_MD5_VERSION 	"mod_md5/0.3.6"
 
 /* Make sure the version of proftpd is as necessary. */
 #if PROFTPD_VERSION_NUMBER < 0x0001030301
@@ -104,6 +104,8 @@ static const char *rnfr_path = NULL;
 
 /* Scratchwork buffer */
 static char pathbuf[PR_TUNABLE_PATH_MAX];
+
+static const char *trace_channel = "md5";
 
 /* Support routines
  */
@@ -411,17 +413,24 @@ static int md5_close_cb(pr_fh_t *fh, int fd) {
     /* Need to check for slightly different commands if mod_sftp is doing
      * the writing.
      */
-    if (strcmp(proto, "sftp") != 0) {
-      if (strcmp(session.curr_cmd, C_STOR) == 0 ||
-          strcmp(session.curr_cmd, C_STOU) == 0) {
+    if (strncmp(proto, "sftp", 5) != 0) {
+      /* For FTP/FTPS, we only need check for STOR/STOU here. */
+      if (strncmp(session.curr_cmd, C_STOR, 5) == 0 ||
+          strncmp(session.curr_cmd, C_STOU, 5) == 0) {
         write_md5 = TRUE;
       }
 
     } else {
-      if (strcmp(session.curr_cmd, "WRITE") == 0) {
+      /* For SFTP sessions, we need to check for STOR, STOU, and WRITE. */
+      if (strncmp(session.curr_cmd, C_STOR, 5) == 0 ||
+          strncmp(session.curr_cmd, C_STOU, 5) == 0 ||
+          strncmp(session.curr_cmd, "WRITE", 6) == 0) {
         write_md5 = TRUE;
       }
     }
+
+    pr_trace_msg(trace_channel, 9, "protocol %s, command %s, write md5 = %s",
+      proto, session.curr_cmd, write_md5 ? "true" : "false");
   }
 
   if (write_md5) {

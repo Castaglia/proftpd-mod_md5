@@ -100,7 +100,7 @@ sub md5_path {
   my $pid_file = File::Spec->rel2abs("$tmpdir/md5.pid");
   my $scoreboard_file = File::Spec->rel2abs("$tmpdir/md5.scoreboard");
 
-  my $log_file = File::Spec->rel2abs('tests.log');
+  my $log_file = test_get_logfile();
 
   my $auth_user_file = File::Spec->rel2abs("$tmpdir/md5.passwd");
   my $auth_group_file = File::Spec->rel2abs("$tmpdir/md5.group");
@@ -246,6 +246,9 @@ sub md5_path {
   $self->assert_child_ok($pid);
 
   if ($ex) {
+    test_append_logfile($log_file, $ex);
+    unlink($log_file);
+
     die($ex);
   }
 
@@ -260,7 +263,7 @@ sub md5_path_chrooted {
   my $pid_file = File::Spec->rel2abs("$tmpdir/md5.pid");
   my $scoreboard_file = File::Spec->rel2abs("$tmpdir/md5.scoreboard");
 
-  my $log_file = File::Spec->rel2abs('tests.log');
+  my $log_file = test_get_logfile();
 
   my $auth_user_file = File::Spec->rel2abs("$tmpdir/md5.passwd");
   my $auth_group_file = File::Spec->rel2abs("$tmpdir/md5.group");
@@ -408,6 +411,9 @@ sub md5_path_chrooted {
   $self->assert_child_ok($pid);
 
   if ($ex) {
+    test_append_logfile($log_file, $ex);
+    unlink($log_file);
+
     die($ex);
   }
 
@@ -422,13 +428,14 @@ sub md5_stor {
   my $pid_file = File::Spec->rel2abs("$tmpdir/md5.pid");
   my $scoreboard_file = File::Spec->rel2abs("$tmpdir/md5.scoreboard");
 
-  my $log_file = File::Spec->rel2abs('tests.log');
+  my $log_file = test_get_logfile();
 
   my $auth_user_file = File::Spec->rel2abs("$tmpdir/md5.passwd");
   my $auth_group_file = File::Spec->rel2abs("$tmpdir/md5.group");
 
   my $user = 'proftpd';
   my $passwd = 'test';
+  my $group = 'ftpd';
   my $home_dir = File::Spec->rel2abs($tmpdir);
   my $uid = 500;
   my $gid = 500;
@@ -450,7 +457,7 @@ sub md5_stor {
 
   auth_user_write($auth_user_file, $user, $passwd, $uid, $gid, $home_dir,
     '/bin/bash');
-  auth_group_write($auth_group_file, 'ftpd', $gid, $user);
+  auth_group_write($auth_group_file, $group, $gid, $user);
 
   my $config = {
     PidFile => $pid_file,
@@ -542,6 +549,9 @@ sub md5_stor {
   $self->assert_child_ok($pid);
 
   if ($ex) {
+    test_append_logfile($log_file, $ex);
+    unlink($log_file);
+
     die($ex);
   }
 
@@ -582,13 +592,14 @@ sub md5_retr {
   my $pid_file = File::Spec->rel2abs("$tmpdir/md5.pid");
   my $scoreboard_file = File::Spec->rel2abs("$tmpdir/md5.scoreboard");
 
-  my $log_file = File::Spec->rel2abs('tests.log');
+  my $log_file = test_get_logfile();
 
   my $auth_user_file = File::Spec->rel2abs("$tmpdir/md5.passwd");
   my $auth_group_file = File::Spec->rel2abs("$tmpdir/md5.group");
 
   my $user = 'proftpd';
   my $passwd = 'test';
+  my $group = 'ftpd';
   my $home_dir = File::Spec->rel2abs($tmpdir);
   my $uid = 500;
   my $gid = 500;
@@ -610,7 +621,7 @@ sub md5_retr {
 
   auth_user_write($auth_user_file, $user, $passwd, $uid, $gid, $home_dir,
     '/bin/bash');
-  auth_group_write($auth_group_file, 'ftpd', $gid, $user);
+  auth_group_write($auth_group_file, $group, $gid, $user);
 
   my $config = {
     PidFile => $pid_file,
@@ -731,6 +742,9 @@ sub md5_retr {
   $self->assert_child_ok($pid);
 
   if ($ex) {
+    test_append_logfile($log_file, $ex);
+    unlink($log_file);
+
     die($ex);
   }
 
@@ -771,13 +785,14 @@ sub md5_sftp_stor {
   my $pid_file = File::Spec->rel2abs("$tmpdir/md5.pid");
   my $scoreboard_file = File::Spec->rel2abs("$tmpdir/md5.scoreboard");
 
-  my $log_file = File::Spec->rel2abs('tests.log');
+  my $log_file = test_get_logfile();
 
   my $auth_user_file = File::Spec->rel2abs("$tmpdir/md5.passwd");
   my $auth_group_file = File::Spec->rel2abs("$tmpdir/md5.group");
 
   my $user = 'proftpd';
   my $passwd = 'test';
+  my $group = 'ftpd';
   my $home_dir = File::Spec->rel2abs($tmpdir);
   my $uid = 500;
   my $gid = 500;
@@ -799,7 +814,7 @@ sub md5_sftp_stor {
 
   auth_user_write($auth_user_file, $user, $passwd, $uid, $gid, $home_dir,
     '/bin/bash');
-  auth_group_write($auth_group_file, 'ftpd', $gid, $user);
+  auth_group_write($auth_group_file, $group, $gid, $user);
 
   my $rsa_host_key = File::Spec->rel2abs('t/etc/modules/mod_md5/ssh_host_rsa_key');
   my $dsa_host_key = File::Spec->rel2abs('t/etc/modules/mod_md5/ssh_host_dsa_key');
@@ -809,7 +824,7 @@ sub md5_sftp_stor {
     ScoreboardFile => $scoreboard_file,
     SystemLog => $log_file,
     TraceLog => $log_file,
-    Trace => 'command:10 fsio:10',
+    Trace => 'command:10 fsio:10 ssh2:20 sftp:20 md5:10',
 
     AuthUserFile => $auth_user_file,
     AuthGroupFile => $auth_group_file,
@@ -914,6 +929,9 @@ sub md5_sftp_stor {
   $self->assert_child_ok($pid);
 
   if ($ex) {
+    test_append_logfile($log_file, $ex);
+    unlink($log_file);
+
     die($ex);
   }
 
@@ -954,13 +972,14 @@ sub md5_sftp_retr {
   my $pid_file = File::Spec->rel2abs("$tmpdir/md5.pid");
   my $scoreboard_file = File::Spec->rel2abs("$tmpdir/md5.scoreboard");
 
-  my $log_file = File::Spec->rel2abs('tests.log');
+  my $log_file = test_get_logfile();
 
   my $auth_user_file = File::Spec->rel2abs("$tmpdir/md5.passwd");
   my $auth_group_file = File::Spec->rel2abs("$tmpdir/md5.group");
 
   my $user = 'proftpd';
   my $passwd = 'test';
+  my $group = 'ftpd';
   my $home_dir = File::Spec->rel2abs($tmpdir);
   my $uid = 500;
   my $gid = 500;
@@ -982,7 +1001,7 @@ sub md5_sftp_retr {
 
   auth_user_write($auth_user_file, $user, $passwd, $uid, $gid, $home_dir,
     '/bin/bash');
-  auth_group_write($auth_group_file, 'ftpd', $gid, $user);
+  auth_group_write($auth_group_file, $group, $gid, $user);
 
   my $rsa_host_key = File::Spec->rel2abs('t/etc/modules/mod_md5/ssh_host_rsa_key');
   my $dsa_host_key = File::Spec->rel2abs('t/etc/modules/mod_md5/ssh_host_dsa_key');
@@ -1111,6 +1130,9 @@ sub md5_sftp_retr {
   $self->assert_child_ok($pid);
 
   if ($ex) {
+    test_append_logfile($log_file, $ex);
+    unlink($log_file);
+
     die($ex);
   }
 
