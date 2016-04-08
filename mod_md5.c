@@ -2,7 +2,7 @@
  * ProFTPD: mod_md5 -- an FSIO module for automatically generating MD5 hashes
  *                     of uploaded files
  *
- * Copyright (c) 2001-2013 TJ Saunders
+ * Copyright (c) 2001-2016 TJ Saunders
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,13 +25,11 @@
  * This is mod_md5, contrib software for proftpd 1.2.x and above.
  * For more information contact TJ Saunders <tj@castaglia.org>.  This module
  * is based on a patch from Bill Fenner.
- *
- * $Id: mod_md5.c,v 1.8 2009/09/28 18:56:11 tj Exp tj $
  */
 
 #include "conf.h"
 
-#define MOD_MD5_VERSION 	"mod_md5/0.3.6"
+#define MOD_MD5_VERSION 	"mod_md5/0.3.7"
 
 /* Make sure the version of proftpd is as necessary. */
 #if PROFTPD_VERSION_NUMBER < 0x0001030301
@@ -663,18 +661,22 @@ MODRET set_md5path(cmd_rec *cmd) {
   CHECK_CONF(cmd, CONF_ROOT|CONF_VIRTUAL|CONF_GLOBAL|CONF_ANON);
 
   /* Make sure this is an acceptable path */
-  if (*cmd->argv[1] == '.' && *cmd->argv[1] == '.')
+  path = cmd->argv[1];
+  if (path[0] == '.' &&
+      path[1] == '.') {
     CONF_ERROR(cmd, pstrcat(cmd->tmp_pool, "'..' prefix not allowed in path: ",
-      cmd->argv[1], NULL));
+      path, NULL));
+  }
 
-  if (strpbrk(cmd->argv[1], "*?"))
+  if (strpbrk(path, "*?")) {
     CONF_ERROR(cmd, pstrcat(cmd->tmp_pool, "wildcards not allowed in path: ",
-      cmd->argv[1], NULL));
+      path, NULL));
+  }
 
   /* Make sure the given path ends in a slash -- very important! */
-  path = cmd->argv[1];
-  if (path[strlen(path) - 1] != '/')
+  if (path[strlen(path) - 1] != '/') {
     path = pstrcat(cmd->tmp_pool, path, "/", NULL);
+  }
 
   c = add_config_param_str(cmd->argv[0], 1, path);
   c->flags |= CF_MERGEDOWN_MULTI;
